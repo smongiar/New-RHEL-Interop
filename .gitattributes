@@ -1,0 +1,4 @@
+# git-crypt encryption for sensitive files
+# Files matching these patterns will be encrypted in git
+secrets/containers-auth.json filter=git-crypt diff=git-crypt
+.gitattributes !filter !diff
