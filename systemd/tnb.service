@@ -1,0 +1,112 @@
+[Unit]
+Description=TNB Testing Service - SpringBoot Examples
+After=network-online.target podman-tnbuser.service
+Wants=network-online.target
+Requires=podman-tnbuser.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+User=tnbuser
+Group=tnbuser
+WorkingDirectory=/var/opt/tnb-tests
+
+# Environment variables for Testcontainers support
+# tnbuser is always UID 1000 (created during build)
+Environment="HOME=/home/tnbuser"
+Environment="USER=tnbuser"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="DOCKER_HOST=unix:///run/user/1000/podman/podman.sock"
+Environment="TESTCONTAINERS_RYUK_DISABLED=false"
+Environment="TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/run/user/1000/podman/podman.sock"
+Environment="MAVEN_HOME=/opt/maven"
+Environment="PATH=/opt/maven/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="JAVA_HOME=/usr/lib/jvm/jre-21"
+Environment="MAVEN_OPTS=-Duser.home=/home/tnbuser -Dmaven.repo.local=/home/tnbuser/.m2/repository"
+
+# Expand root filesystem on first boot (if disk was resized)
+ExecStartPre=+/bin/bash -c 'if [ ! -f /var/lib/tnb-fs-expanded ]; then \
+    echo "Expanding root filesystem to use full disk..."; \
+    growpart /dev/vda 4 2>/dev/null || true; \
+    xfs_growfs / 2>/dev/null || resize2fs /dev/vda4 2>/dev/null || true; \
+    touch /var/lib/tnb-fs-expanded; \
+    df -h /; \
+fi'
+
+# Prepare writable working directory in /var (bootc/ostree images have /opt read-only)
+# Copy sources from read-only /opt to writable /var on first run or if missing
+# The + prefix runs this command as root even though User=tnbuser
+ExecStartPre=+/bin/bash -c 'if [ ! -d /var/opt/tnb-tests/.git ]; then \
+    echo "Setting up writable TNB tests directory in /var/opt..."; \
+    mkdir -p /var/opt && \
+    cp -r /opt/tnb-tests /var/opt/ && \
+    chown -R tnbuser:tnbuser /var/opt/tnb-tests && \
+    echo "TNB tests directory ready at /var/opt/tnb-tests"; \
+fi'
+
+# Clean up old/stopped containers to free space before running tests
+ExecStartPre=/bin/bash -c 'echo "Cleaning up old containers to free disk space..."; \
+    podman system prune -af --volumes 2>/dev/null || true; \
+    echo "Disk usage:"; \
+    df -h / /var/home/tnbuser'
+
+# Verify Podman socket is accessible before running tests
+ExecStartPre=/bin/bash -c 'echo "Verifying Podman/Testcontainers availability..."; \
+    export DOCKER_HOST=unix:///run/user/1000/podman/podman.sock; \
+    if ! timeout 30 sh -c "until test -S /run/user/1000/podman/podman.sock; do sleep 1; done"; then \
+        echo "ERROR: Podman socket not available at /run/user/1000/podman/podman.sock"; \
+        echo "Podman service status:"; \
+        systemctl status podman-tnbuser.service --no-pager || true; \
+        echo "Runtime directory contents:"; \
+        ls -la /run/user/1000/ 2>&1 || true; \
+        exit 1; \
+    fi; \
+    if ! podman version > /dev/null 2>&1; then \
+        echo "ERROR: Cannot connect to Podman. Testcontainers will fail."; \
+        exit 1; \
+    fi; \
+    echo "Podman is ready at /run/user/1000/podman/podman.sock. Testcontainers should work."'
+
+# Run TNB tests for SpringBoot examples using Maven
+# On first boot: full build (clean compile test)
+# On subsequent boots: skip clean if already compiled (faster)
+ExecStart=/bin/bash -c 'if [ ! -f /var/opt/tnb-tests/.tnb-built ]; then \
+        echo "========================================"; \
+        echo "First boot: Compiling TNB-tests from source..."; \
+        echo "This will take 10-20 minutes but only happens once"; \
+        echo "========================================"; \
+        /opt/maven/bin/mvn clean verify \
+            -s /home/tnbuser/.m2/settings.xml \
+            -Dmaven.repo.local=/home/tnbuser/.m2/repository \
+            -Pspringboot \
+            --projects org.jboss.fuse.tnb.tests.springboot:examples \
+            --also-make \
+            --also-make-dependents && \
+        touch /var/opt/tnb-tests/.tnb-built; \
+    else \
+        echo "========================================"; \
+        echo "Already compiled. Running tests (faster)..."; \
+        echo "To force recompile: rm /var/opt/tnb-tests/.tnb-built"; \
+        echo "========================================"; \
+        /opt/maven/bin/mvn verify \
+            -s /home/tnbuser/.m2/settings.xml \
+            -Dmaven.repo.local=/home/tnbuser/.m2/repository \
+            -Pspringboot \
+            --projects org.jboss.fuse.tnb.tests.springboot:examples \
+            --also-make-dependents; \
+    fi'
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tnb-tests
+
+# Restart policy
+Restart=no
+
+# Timeout settings (tests can take a while)
+TimeoutStartSec=infinity
+TimeoutStopSec=60s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,240 @@
+<settings
+        xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <localRepository>/root/.m2/repository/</localRepository>
+    <interactiveMode/>
+    <usePluginRegistry/>
+    <offline/>
+    <pluginGroups/>
+    <servers>
+        <server>
+            <id>apache-snapshots</id>
+            <configuration>
+                <timeout>100000</timeout>
+            </configuration>
+        </server>
+    </servers>
+    <mirrors>
+        <mirror>
+            <id>mirror-rh-maven-central-proxy</id>
+            <name>RH Maven Central repo proxy</name>
+            <url>https://repository.engineering.redhat.com/nexus/repository/maven-central/</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>
+    <proxies/>
+    <profiles>
+        <!--
+             The Order is very important. The one that is 1st in settings.xml is put at last when multiple
+             profile repositories are activated.
+         -->
+
+        <!-- @See https://docs.engineering.redhat.com/pages/viewpage.action?pageId=124099741 -->
+        <profile>
+            <id>repo.rh-indy-temporary</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>repo.rh-indy-temporary</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>rh-indy-temporary</id>
+                    <name>RH Indy Temporary</name>
+                    <url>https://indy.corp.redhat.com/api/content/maven/hosted/temporary-builds/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>rh-indy-temporary</id>
+                    <name>RH Indy Temporary</name>
+                    <url>https://indy.corp.redhat.com/api/content/maven/hosted/temporary-builds/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <!-- @See https://docs.engineering.redhat.com/pages/viewpage.action?pageId=124099741 -->
+        <profile>
+            <id>repo.rh-indy</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>repo.rh-indy</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>rh-indy</id>
+                    <name>RH Indy</name>
+                    <url>https://indy.corp.redhat.com/api/content/maven/group/builds-untested+shared-imports/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>rh-indy</id>
+                    <name>RH Indy</name>
+                    <url>https://indy.corp.redhat.com/api/content/maven/group/builds-untested+shared-imports/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <profile>
+            <id>repo.apache-snapshots</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>repo.apache-snapshots</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>apache-snapshots</id>
+                    <name>Apache Snapshots</name>
+                    <url>https://repository.apache.org/content/groups/snapshots/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>apache-snapshots</id>
+                    <name>Apache Snapshots</name>
+                    <url>https://repository.apache.org/content/groups/snapshots/</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <profile>
+            <id>repo.fuse-qe-nexus</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>fuse-qe-nexus</id>
+                    <name>FuseQE Nexus Repo (fuse-all)</name>
+                    <url>https://nexus-camel-qe.apps.int.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/repository/fuse-all/</url>
+                    <layout>default</layout>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>fuse-qe-nexus</id>
+                    <name>FuseQE Nexus Repo (fuse-all)</name>
+                    <url>https://nexus-camel-qe.apps.int.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/repository/fuse-all/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <profile>
+            <id>repo.jboss-qa-releases</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>jboss-qa-releases</id>
+                    <name>JBoss QA Releases</name>
+                    <url>https://repository.engineering.redhat.com/nexus/repository/jboss-qa-releases/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>jboss-qa-releases</id>
+                    <name>JBoss QA Releases</name>
+                    <url>https://repository.engineering.redhat.com/nexus/repository/jboss-qa-releases/</url>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <profile>
+            <id>repo.redhat-ga</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>redhat-ga</id>
+                    <name>RH GA (General Availability) Repo</name>
+                    <url>https://maven.repository.redhat.com/ga</url>
+                    <layout>default</layout>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>redhat-ga</id>
+                    <name>RH GA (General Availability) Repo</name>
+                    <url>https://maven.repository.redhat.com/ga/</url>
+                    <layout>default</layout>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+
+        <!-- TNB repositories for different branches -->
+        <profile>
+            <id>repo.tnb-main</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>tnb-main</id>
+                    <name>TNB main branch snapshots</name>
+                    <url>https://nexus-camel-qe.apps.int.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/repository/tnb-main/</url>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>repo.fuse-qe-nexus</activeProfile>
+        <activeProfile>repo.jboss-qa-releases</activeProfile>
+        <activeProfile>repo.redhat-ga</activeProfile>
+        <activeProfile>repo.tnb-main</activeProfile>
+    </activeProfiles>
+</settings>

@@ -1,0 +1,28 @@
+[Unit]
+Description=Podman API Service for TNB User
+Documentation=man:podman-system-service(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=tnbuser
+Group=tnbuser
+
+# Set runtime directory - tnbuser is always UID 1000
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+
+# Ensure Podman socket directory exists
+ExecStartPre=/bin/mkdir -p /run/user/1000/podman
+
+# Verify XDG_RUNTIME_DIR is set correctly
+ExecStartPre=/bin/bash -c 'echo "Starting Podman for tnbuser, XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR"'
+
+# Start Podman system service with unlimited timeout (keep socket open)
+ExecStart=/usr/bin/podman --log-level=info system service --time=0
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
